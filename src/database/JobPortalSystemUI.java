@@ -40,7 +40,7 @@ public class JobPortalSystemUI extends JFrame {
                 tabbedPane.add("Companies", new CompaniesPanel(userID, role));
             }
             case "admin" -> {
-                tabbedPane.add("Users", new UsersPanel(userID));
+                tabbedPane.add("Users", new UsersPanel(userID, role));
                 tabbedPane.add("Companies", new CompaniesPanel(userID, role));
             }default -> {
                 JOptionPane.showMessageDialog(null, "Login Failed", "Error", JOptionPane.ERROR_MESSAGE);
