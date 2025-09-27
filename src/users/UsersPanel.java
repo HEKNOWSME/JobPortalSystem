@@ -39,21 +39,16 @@ public class UsersPanel extends JPanel {
 
     }
     private void  createSizeComponents() {
-        setFields(usernameLabel, username, emailLabel, email, passwordLabel, password);
-        submitButton.setBounds(350, 10, 200, 30);
-        updateButton.setBounds(350, 50, 200, 30);
-        deleteButton.setBounds(350, 90, 200, 30);
-    }
-
-    public static void setFields(JLabel usernameLabel, JTextField username, JLabel emailLabel, JTextField email, JLabel passwordLabel, JTextField password) {
         usernameLabel.setBounds(10, 10, 100, 30);
         username.setBounds(130, 10, 200, 30);
         emailLabel.setBounds(10, 50, 100, 30);
         email.setBounds(130, 50, 200, 30);
         passwordLabel.setBounds(10, 90, 100, 30);
         password.setBounds(130, 90, 200, 30);
+        submitButton.setBounds(350, 10, 200, 30);
+        updateButton.setBounds(350, 50, 200, 30);
+        deleteButton.setBounds(350, 90, 200, 30);
     }
-
     private void  createTable() {
         String[] usersColumns = {"UserId","Username", "Email", "password", "Role", "Created At"};
         for (var col : usersColumns) {

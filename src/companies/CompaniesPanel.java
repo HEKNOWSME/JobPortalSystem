@@ -1,187 +1,227 @@
 package companies;
 
 import database.Db;
-import users.UsersPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class CompaniesPanel extends JPanel {
-    private int userID;
-    private String role;
-    private final JLabel nameLabel = new JLabel("Name"); private final JTextField name = new JTextField(20);
-    private final JLabel locationLabel = new JLabel("Location"); private final JTextField location = new JTextField(20);
-    private final JLabel employerIdLabel = new JLabel("Employer Id"); private final JTextField employer_id = new JTextField(20);
-    JTable table = new JTable();
-    JScrollPane scrollPane = new JScrollPane(table);
-    DefaultTableModel model = new DefaultTableModel();
-    JButton submitButton = new JButton("Create Company"); JButton updateButton = new JButton("Update Company"); JButton deleteButton = new JButton("Delete Company");
-    public CompaniesPanel(int userID,  String role) {
+    private final int userID;
+    private final String role;
+
+    private final JLabel nameLabel = new JLabel("Company Name");
+    private final JTextField name = new JTextField(20);
+
+    private final JLabel locationLabel = new JLabel("Location");
+    private final JTextField location = new JTextField(20);
+
+    private final JLabel employerIdLabel = new JLabel("Employer ID");
+    private final JTextField employer_id = new JTextField(20);
+
+    private JTable table = new JTable();
+    private JScrollPane scrollPane = new JScrollPane(table);
+    private DefaultTableModel model = new DefaultTableModel();
+
+    private JButton submitButton = new JButton("Create Company");
+    private JButton updateButton = new JButton("Update Company");
+    private JButton deleteButton = new JButton("Delete Company");
+
+    public CompaniesPanel(int userID, String role) {
         this.userID = userID;
         this.role = role;
-        init();
-        createUIComponents();
-        createSizeComponents();
+
+        setLayout(new BorderLayout(10, 10));
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5,5,5,5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+
         if (role.equalsIgnoreCase("Admin")) {
-            createTable();
+            gbc.gridx = 0; gbc.gridy = 0;
+            formPanel.add(nameLabel, gbc);
+            gbc.gridx = 1;
+            formPanel.add(name, gbc);
+
+            gbc.gridx = 0; gbc.gridy = 1;
+            formPanel.add(locationLabel, gbc);
+            gbc.gridx = 1;
+            formPanel.add(location, gbc);
+
+            gbc.gridx = 0; gbc.gridy = 2;
+            formPanel.add(employerIdLabel, gbc);
+            gbc.gridx = 1;
+            formPanel.add(employer_id, gbc);
+
+            gbc.gridx = 0; gbc.gridy = 3;
+            formPanel.add(submitButton, gbc);
+            gbc.gridx = 1;
+            formPanel.add(updateButton, gbc);
+            gbc.gridx = 2;
+            formPanel.add(deleteButton, gbc);
+        }
+
+        add(formPanel, BorderLayout.NORTH);
+
+
+        createTable();
+        add(scrollPane, BorderLayout.CENTER);
+
+        if (role.equalsIgnoreCase("Admin") || role.equalsIgnoreCase("Employer")) {
             loadCompanies();
         }
-        submitButton.addActionListener(_-> createCompany());
-        deleteButton.addActionListener(_-> deleteCompany());
-        updateButton.addActionListener(_-> updateCompany());
+
+        submitButton.addActionListener(e -> createCompany());
+        updateButton.addActionListener(e -> updateCompany());
+        deleteButton.addActionListener(e -> deleteCompany());
     }
-    private void init() {
-        setLayout(null);
-    }
-    private void createUIComponents() {
-        if (role.equalsIgnoreCase("Admin")) {
-            add(nameLabel); add(name);
-            add(locationLabel); add(locationLabel);
-            add(location); add(location);
-            add(employerIdLabel);add(employer_id);
-            add(submitButton); add(submitButton);
-            add(updateButton); add(updateButton);
-            add(deleteButton); add(deleteButton);
-        }
-    }
-    private void  createSizeComponents() {
-        UsersPanel.setFields(nameLabel, name, locationLabel, location, employerIdLabel, employer_id);
-        submitButton.setBounds(350, 10, 200, 30);
-        updateButton.setBounds(350, 50, 200, 30);
-        deleteButton.setBounds(350, 90, 200, 30);
-    }
-    private void  createTable() {
-        String[] columns = {"ID", "Name", "Location","Created_at" };
-        for (var col : columns) {
-            model.addColumn(col);
-        }
+
+    private void createTable() {
+        String[] columns = {"Company ID", "Name", "Location", "Employer Name", "Employer Email", "Created At"};
+        model.setColumnIdentifiers(columns);
         table.setModel(model);
-        scrollPane.setBounds(10, 200, 1250, 400);
-        table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.getColumnModel().getColumn(0).setPreferredWidth(5);
-        table.setRowHeight(50);
-        add(scrollPane);
+        table.setRowHeight(40);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        scrollPane.setPreferredSize(new Dimension(1200, 400));
     }
+
     private void createCompany() {
-        if (name.getText().isEmpty()
-                || location.getText().isEmpty()
-                || employer_id.getText().isEmpty()
-        ) {
+        if (name.getText().isEmpty() || location.getText().isEmpty() || employer_id.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill all the fields", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            String nameText = name.getText();
-            String locationText = location.getText();
+            return;
+        }
+
+        try (var conn = Db.getConnection()) {
             int employer = Integer.parseInt(employer_id.getText());
-            try(var conn = Db.getConnection()) {
-                var fetchEmployer = conn.prepareStatement("select * from users where user_id = ?");
-                fetchEmployer.setInt(1, employer);
-                var result = fetchEmployer.executeQuery();
-                if (result.next() && result.getString("role").equalsIgnoreCase("employer")) {
-                    var createStatement = conn.prepareStatement("INSERT INTO companies (name, location, user_id) VALUES (?,?,?)");
-                    createStatement.setString(1, nameText);
-                    createStatement.setString(2, locationText);
-                    createStatement.setInt(3, employer);
-                    var created = createStatement.executeUpdate();
-                    if (created > 0) {
-                        clearFields();
-                        model.setRowCount(0);
-                        loadCompanies();
-                        JOptionPane.showMessageDialog(this, "Job Created", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Job Not Created", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+            var checkEmployer = conn.prepareStatement("SELECT * FROM users WHERE user_id = ? AND role = 'employer'");
+            checkEmployer.setInt(1, employer);
+            var rs = checkEmployer.executeQuery();
+
+            if (rs.next()) {
+                var stmt = conn.prepareStatement("INSERT INTO companies (name, location, user_id) VALUES (?,?,?)");
+                stmt.setString(1, name.getText());
+                stmt.setString(2, location.getText());
+                stmt.setInt(3, employer);
+                int created = stmt.executeUpdate();
+
+                if (created > 0) {
+                    clearFields();
+                    model.setRowCount(0);
+                    loadCompanies();
+                    JOptionPane.showMessageDialog(this, "Company Created", "Success", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "User does not exist", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Company not created", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-
-
+            } else {
+                JOptionPane.showMessageDialog(this, "Employer not found", "Error", JOptionPane.ERROR_MESSAGE);
             }
-            catch (Exception e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private void updateCompany() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a company first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int companyId = (int) table.getValueAt(selectedRow, 0);
+
+        try (var conn = Db.getConnection()) {
+            int employer = employer_id.getText().isEmpty() ? -1 : Integer.parseInt(employer_id.getText());
+
+            if (employer != -1) {
+                var checkEmployer = conn.prepareStatement("SELECT * FROM users WHERE user_id = ? AND role = 'employer'");
+                checkEmployer.setInt(1, employer);
+                var rs = checkEmployer.executeQuery();
+                if (!rs.next()) {
+                    JOptionPane.showMessageDialog(this, "Employer not found", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            var stmt = conn.prepareStatement("UPDATE companies SET name = ?, location = ?, user_id = ? WHERE company_id = ?");
+            stmt.setString(1, name.getText().isEmpty() ? (String) table.getValueAt(selectedRow, 1) : name.getText());
+            stmt.setString(2, location.getText().isEmpty() ? (String) table.getValueAt(selectedRow, 2) : location.getText());
+            stmt.setInt(3, employer != -1 ? employer : (int) table.getValueAt(selectedRow, 0));
+            stmt.setInt(4, companyId);
+            stmt.executeUpdate();
+
+            clearFields();
+            model.setRowCount(0);
+            loadCompanies();
+            JOptionPane.showMessageDialog(this, "Company Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteCompany() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a company first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int companyId = (int) table.getValueAt(selectedRow, 0);
+
+        try (var conn = Db.getConnection()) {
+            var stmt = conn.prepareStatement("DELETE FROM companies WHERE company_id = ?");
+            stmt.setInt(1, companyId);
+            int deleted = stmt.executeUpdate();
+
+            if (deleted > 0) {
+                model.removeRow(selectedRow);
+                JOptionPane.showMessageDialog(this, "Company Deleted", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Company Not Deleted", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void clearFields() {
         name.setText("");
         location.setText("");
         employer_id.setText("");
     }
+
     public void loadCompanies() {
-            try (var conn = Db.getConnection()) {
-                var statement = conn.prepareStatement("SELECT * FROM companies");
-                var resultSet = statement.executeQuery();
-                while (resultSet.next()) {
-                    model.addRow(new Object[]{
-                            resultSet.getInt("company_id"),
-                            resultSet.getString("name"),
-                            resultSet.getString("location"),
-                            resultSet.getString("created_at"),
-
-                    });
-                }
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        try (var conn = Db.getConnection()) {
+            String sql;
+            if (role.equalsIgnoreCase("Admin")) {
+                sql = "SELECT c.company_id, c.name, c.location, u.username AS employer_name, u.email AS employer_email, c.created_at " +
+                        "FROM companies c JOIN users u ON c.user_id = u.user_id";
+            } else if (role.equalsIgnoreCase("Employer")) {
+                sql = "SELECT c.company_id, c.name, c.location, u.username AS employer_name, u.email AS employer_email, c.created_at " +
+                        "FROM companies c JOIN users u ON c.user_id = u.user_id WHERE c.user_id = ?";
+            } else {
+                return;
             }
-        }
-    private void deleteCompany() {
-        var selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Selected Row Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            String company = model.getValueAt(selectedRow, 0).toString();
-            try (var conn = Db.getConnection()) {
-                var statement = conn.prepareStatement("DELETE FROM companies where company_id = ?");
-                int id = Integer.parseInt(company);
-                statement.setInt(1, id);
-                var check = statement.executeUpdate();
-                if (check < 0) {
-                    JOptionPane.showMessageDialog(this, "Company Not Deleted Successfully", "Error", JOptionPane.ERROR_MESSAGE);
 
-                } else {
-                    model.removeRow(selectedRow);
-                    JOptionPane.showMessageDialog(this, "Company Deleted Successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    private void updateCompany() {
-        var selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Selected Row Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-        } else  {
-            String companyID = model.getValueAt(selectedRow, 0).toString();
-            int id = Integer.parseInt(companyID);
+            var stmt = conn.prepareStatement(sql);
+            if (role.equalsIgnoreCase("Employer")) stmt.setInt(1, userID);
 
-            try (var conn = Db.getConnection()) {
-                var fetchCompany = conn.prepareStatement("SELECT * FROM companies where company_id = ?");
-                fetchCompany.setInt(1, id);
-                var result = fetchCompany.executeQuery();
-                if (result.next()) {
-                    var fetchEmployer = conn.prepareStatement("select * from users where user_id = ?");
-                    fetchEmployer.setInt(1, employer_id.getText().isEmpty() ? result.getInt("user_id") : Integer.parseInt(employer_id.getText()));
-                    var result1 = fetchEmployer.executeQuery();
-                    if (!result1.next()) {
-                        JOptionPane.showMessageDialog(this, "Employer Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    var statement =  conn.prepareStatement("UPDATE companies SET name = ?, location = ?, user_id = ? WHERE company_id =?");
-                    statement.setString(1, name.getText().isEmpty() ? result.getString("name") : name.getText());
-                    statement.setString(2, location.getText().isEmpty() ? result.getString("location") : location.getText());
-                    statement.setInt(3, Integer.parseInt(employer_id.getText().isEmpty() ? result.getString("user_id") : employer_id.getText()));
-                    statement.setInt(4, id);
-                    statement.executeUpdate();
-                    model.setRowCount(0);
-                    clearFields();
-                    loadCompanies();
-                    JOptionPane.showMessageDialog(this, "Job Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else  {
-                    JOptionPane.showMessageDialog(this, "Job Not Updated", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            var rs = stmt.executeQuery();
+            model.setRowCount(0);
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                        rs.getInt("company_id"),
+                        rs.getString("name"),
+                        rs.getString("location"),
+                        rs.getString("employer_name"),
+                        rs.getString("employer_email"),
+                        rs.getTimestamp("created_at")
+                });
             }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

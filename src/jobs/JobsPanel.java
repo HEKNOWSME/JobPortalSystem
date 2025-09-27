@@ -1,74 +1,99 @@
 package jobs;
 
-import applications.ApplicationsPanel;
 import database.Db;
-import users.UsersPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 
 public class JobsPanel extends JPanel {
     private int userID;
     private String role;
-    private final JLabel titleLabel = new JLabel("Title"); private final JTextField jobTitle = new JTextField(20);
-    private final JLabel descriptionLabel = new JLabel("Description"); private final JTextField jobDescription = new JTextField(20);
-    private final JLabel minSalaryLabel = new JLabel("Minimum Salary"); private final JTextField minSalary = new JTextField(20);
-    private final JLabel maxSalaryLabel = new JLabel("Maximum Salary"); private final JTextField maxSalary = new JTextField(20);
+    private final JLabel titleLabel = new JLabel("Title");
+    private final JTextField jobTitle = new JTextField(20);
+    private final JLabel descriptionLabel = new JLabel("Description");
+    private final JTextField jobDescription = new JTextField(20);
+    private final JLabel minSalaryLabel = new JLabel("Minimum Salary");
+    private final JTextField minSalary = new JTextField(20);
+    private final JLabel maxSalaryLabel = new JLabel("Maximum Salary");
+    private final JTextField maxSalary = new JTextField(20);
+
     JTable table = new JTable();
     JScrollPane scrollPane = new JScrollPane(table);
     DefaultTableModel model = new DefaultTableModel();
-    JButton submitButton = new JButton("Create Job"); JButton updateButton = new JButton("Update Job"); JButton deleteButton = new JButton("Delete Job");
-    public JobsPanel(int userID,  String role) {
+
+    JButton submitButton = new JButton("Create Job");
+    JButton updateButton = new JButton("Update Job");
+    JButton deleteButton = new JButton("Delete Job");
+    JButton applyButton = new JButton("Apply Job"); // added for jobseekers
+
+    public JobsPanel(int userID, String role) {
         this.userID = userID;
         this.role = role;
         init();
         if (this.role.equals("employer")) {
-        createUIComponents();
+            createUIComponents();
         }
         createSizeComponents();
         createTable();
         loadJobs();
-        submitButton.addActionListener(_-> createJob());
-        deleteButton.addActionListener(_-> deleteJob());
-        updateButton.addActionListener(_-> updateJob());
+
+        submitButton.addActionListener(_ -> createJob());
+        deleteButton.addActionListener(_ -> deleteJob());
+        updateButton.addActionListener(_ -> updateJob());
+
+        if (this.role.equals("jobseeker")) {
+            add(applyButton);
+            applyButton.setBounds(1100, 150, 120, 30);
+            applyButton.addActionListener(_ -> applyJob());
+        }
     }
+
     private void init() {
         setLayout(null);
     }
+
     private void createUIComponents() {
-        add(titleLabel);
-        add(jobTitle); add(jobTitle);
-        add(descriptionLabel); add(descriptionLabel);
-        add(jobDescription); add(jobDescription);
-        add(minSalaryLabel);add(minSalary);
-        add(maxSalaryLabel);add(maxSalary);
-        add(submitButton); add(submitButton);
-        add(updateButton); add(updateButton);
-        add(deleteButton); add(deleteButton);
-
-
+        add(titleLabel); add(jobTitle);
+        add(descriptionLabel); add(jobDescription);
+        add(minSalaryLabel); add(minSalary);
+        add(maxSalaryLabel); add(maxSalary);
+        add(submitButton); add(updateButton); add(deleteButton);
     }
-    private void  createSizeComponents() {
-        ApplicationsPanel.setFields(titleLabel, jobTitle, descriptionLabel, jobDescription, minSalaryLabel, minSalary, maxSalaryLabel, maxSalary, submitButton, updateButton, deleteButton);
+
+    private void createSizeComponents() {
+        titleLabel.setBounds(50, 50, 100, 30);
+        jobTitle.setBounds(150, 50, 200, 30);
+        descriptionLabel.setBounds(50, 90, 100, 30);
+        jobDescription.setBounds(150, 90, 200, 30);
+        minSalaryLabel.setBounds(50, 130, 100, 30);
+        minSalary.setBounds(150, 130, 200, 30);
+        maxSalaryLabel.setBounds(50, 170, 100, 30);
+        maxSalary.setBounds(150, 170, 200, 30);
+
+        submitButton.setBounds(400, 50, 120, 30);
+        updateButton.setBounds(400, 90, 120, 30);
+        deleteButton.setBounds(400, 130, 120, 30);
     }
-    private void  createTable() {
-        String[] columns = {"ID", "Job Title", "Job Description", "Job Type", "Job Min Salary", "Job Max Salary", "Status", "Posted At" };
+
+    private void createTable() {
+        String[] columns = {
+                "ID", "Job Title", "Job Description", "Job Type",
+                "Job Min Salary", "Job Max Salary", "Status", "Posted At"
+        };
         for (var col : columns) {
             model.addColumn(col);
         }
         table.setModel(model);
-        scrollPane.setBounds(10, 200, 1250, 400);
+        scrollPane.setBounds(10, 220, 1250, 400);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getColumnModel().getColumn(0).setPreferredWidth(5);
-        table.setRowHeight(50);
+        table.setRowHeight(40);
         add(scrollPane);
     }
+
     private void createJob() {
-        if (jobTitle.getText().isEmpty()
-                || jobDescription.getText().isEmpty()
-                || minSalary.getText().isEmpty()
-                || maxSalary.getText().isEmpty()) {
+        if (jobTitle.getText().isEmpty() || jobDescription.getText().isEmpty()
+                || minSalary.getText().isEmpty() || maxSalary.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill all the fields", "Error", JOptionPane.ERROR_MESSAGE);
         } else if (Integer.parseInt(minSalary.getText()) > Integer.parseInt(maxSalary.getText())) {
             JOptionPane.showMessageDialog(this, "Minimum Salary must not be greater than Maximum Salary", "Error", JOptionPane.ERROR_MESSAGE);
@@ -77,12 +102,14 @@ public class JobsPanel extends JPanel {
             String description = jobDescription.getText();
             int min = Integer.parseInt(minSalary.getText());
             int max = Integer.parseInt(maxSalary.getText());
-            try(var conn = Db.getConnection()) {
+            try (var conn = Db.getConnection()) {
                 var fetchEmployerCompany = conn.prepareStatement("SELECT * FROM companies WHERE user_id = ?");
                 fetchEmployerCompany.setInt(1, userID);
                 var employerCompany = fetchEmployerCompany.executeQuery();
                 if (employerCompany.next()) {
-                    var createStatement = conn.prepareStatement("INSERT INTO jobs (title, description, salary_min, salary_max, company_id) VALUES (?,?,?,?,?)");
+                    var createStatement = conn.prepareStatement(
+                            "INSERT INTO jobs (title, description, salary_min, salary_max, company_id) VALUES (?,?,?,?,?)"
+                    );
                     createStatement.setString(1, title);
                     createStatement.setString(2, description);
                     createStatement.setInt(3, min);
@@ -99,94 +126,127 @@ public class JobsPanel extends JPanel {
                     }
                 } else {
                     JOptionPane.showMessageDialog(this, "Employer Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-
                 }
-
-        }
-            catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
+
     private void clearFields() {
         jobTitle.setText("");
         jobDescription.setText("");
         minSalary.setText("");
         maxSalary.setText("");
     }
+
     private void loadJobs() {
         try (var conn = Db.getConnection()) {
             var statement = conn.prepareStatement("SELECT * FROM jobs");
             var resultSet = statement.executeQuery();
+            model.setRowCount(0); // clear old rows
             while (resultSet.next()) {
                 model.addRow(new Object[]{
                         resultSet.getInt("job_id"),
                         resultSet.getString("title"),
                         resultSet.getString("description"),
-                        resultSet.getString("Job_type"),
+                        resultSet.getString("job_type"),
                         resultSet.getInt("salary_min"),
                         resultSet.getInt("salary_max"),
                         resultSet.getString("status"),
                         resultSet.getString("posted_at")
                 });
             }
-
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     private void deleteJob() {
         var selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Selected Row Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-        } else {
-            String jobID = model.getValueAt(selectedRow, 0).toString();
-            try (var conn = Db.getConnection()) {
-                var statement = conn.prepareStatement("DELETE FROM jobs where job_id = ?");
-                int id = Integer.parseInt(jobID);
-                statement.setInt(1, id);
-                var check = statement.executeUpdate();
-                if (check < 0) {
-                    JOptionPane.showMessageDialog(this, "Job Not Deleted Successfully", "Error", JOptionPane.ERROR_MESSAGE);
-
-                } else {
-                    model.removeRow(selectedRow);
-                    JOptionPane.showMessageDialog(this, "Job Deleted Successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Select a row first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        int jobID = Integer.parseInt(model.getValueAt(selectedRow, 0).toString());
+        try (var conn = Db.getConnection()) {
+            var statement = conn.prepareStatement("DELETE FROM jobs WHERE job_id = ?");
+            statement.setInt(1, jobID);
+            int check = statement.executeUpdate();
+            if (check > 0) {
+                model.removeRow(selectedRow);
+                JOptionPane.showMessageDialog(this, "Job Deleted", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Job Not Deleted", "Error", JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     private void updateJob() {
         var selectedRow = table.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Selected Row Not Found", "Error", JOptionPane.ERROR_MESSAGE);
-        } else  {
-            String jobID = model.getValueAt(selectedRow, 0).toString();
-            int id = Integer.parseInt(jobID);
-            try (var conn = Db.getConnection()) {
-                var fecthJob = conn.prepareStatement("SELECT * FROM jobs where job_id = ?");
-                fecthJob.setInt(1, id);
-                var result = fecthJob.executeQuery();
-                if (result.next()) {
-                    var statement =  conn.prepareStatement("UPDATE jobs SET title = ?, description = ?, salary_min =?, salary_max =? where job_id = ?");
-                    statement.setString(1, jobTitle.getText().isEmpty() ? result.getString("title") : jobTitle.getText());
-                    statement.setString(2, jobDescription.getText().isEmpty() ? result.getString("description") : jobDescription.getText());
-                    statement.setInt(3, Integer.parseInt(minSalary.getText().isEmpty() ? result.getString("salary_min") : minSalary.getText()));
-                    statement.setInt(4, Integer.parseInt(maxSalary.getText().isEmpty() ? result.getString("salary_max") : maxSalary.getText()));
-                    statement.setInt(5, id);
-                    statement.executeUpdate();
-                    model.setRowCount(0);
-                    clearFields();
-                    loadJobs();
-                    JOptionPane.showMessageDialog(this, "Job Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else  {
-                    JOptionPane.showMessageDialog(this, "Job Not Updated", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Select a row first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        int id = Integer.parseInt(model.getValueAt(selectedRow, 0).toString());
+        try (var conn = Db.getConnection()) {
+            var fecthJob = conn.prepareStatement("SELECT * FROM jobs WHERE job_id = ?");
+            fecthJob.setInt(1, id);
+            var result = fecthJob.executeQuery();
+            if (result.next()) {
+                var statement = conn.prepareStatement(
+                        "UPDATE jobs SET title = ?, description = ?, salary_min = ?, salary_max = ? WHERE job_id = ?"
+                );
+                statement.setString(1, jobTitle.getText().isEmpty() ? result.getString("title") : jobTitle.getText());
+                statement.setString(2, jobDescription.getText().isEmpty() ? result.getString("description") : jobDescription.getText());
+                statement.setInt(3, Integer.parseInt(minSalary.getText().isEmpty() ? result.getString("salary_min") : minSalary.getText()));
+                statement.setInt(4, Integer.parseInt(maxSalary.getText().isEmpty() ? result.getString("salary_max") : maxSalary.getText()));
+                statement.setInt(5, id);
+                statement.executeUpdate();
+                model.setRowCount(0);
+                clearFields();
+                loadJobs();
+                JOptionPane.showMessageDialog(this, "Job Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Job Not Found", "Error", JOptionPane.ERROR_MESSAGE);
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    private void applyJob() {
+        var selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a job to apply", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        int jobId = Integer.parseInt(model.getValueAt(selectedRow, 0).toString());
+
+        try (var conn = Db.getConnection()) {
+            // check if already applied
+            var checkStmt = conn.prepareStatement("SELECT * FROM applications WHERE job_id = ? AND user_id = ?");
+            checkStmt.setInt(1, jobId);
+            checkStmt.setInt(2, userID);
+            var rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                JOptionPane.showMessageDialog(this, "You already applied for this job", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            var stmt = conn.prepareStatement("INSERT INTO applications (job_id, user_id) VALUES (?, ?)");
+            stmt.setInt(1, jobId);
+            stmt.setInt(2, userID);
+            int inserted = stmt.executeUpdate();
+            if (inserted > 0) {
+                JOptionPane.showMessageDialog(this, "Application submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to apply", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
