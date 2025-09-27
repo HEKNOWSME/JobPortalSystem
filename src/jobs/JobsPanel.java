@@ -1,6 +1,8 @@
 package jobs;
 
+import applications.ApplicationsPanel;
 import database.Db;
+import users.UsersPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -48,13 +50,7 @@ public class JobsPanel extends JPanel {
 
     }
     private void  createSizeComponents() {
-      titleLabel.setBounds(10, 10, 100, 30); jobTitle.setBounds(130, 10, 200, 30);
-      descriptionLabel.setBounds(10, 50, 100, 30); jobDescription.setBounds(130, 50, 200, 30);
-      minSalaryLabel.setBounds(10, 90, 100, 30); minSalary.setBounds(130, 90, 200, 30);
-      maxSalaryLabel.setBounds(10, 130, 100, 30); maxSalary.setBounds(130, 130, 200, 30);
-      submitButton.setBounds(350, 10, 100, 30);
-      updateButton.setBounds(350, 50, 100, 30);
-      deleteButton.setBounds(350, 90, 100, 30);
+        ApplicationsPanel.setFields(titleLabel, jobTitle, descriptionLabel, jobDescription, minSalaryLabel, minSalary, maxSalaryLabel, maxSalary, submitButton, updateButton, deleteButton);
     }
     private void  createTable() {
         String[] columns = {"ID", "Job Title", "Job Description", "Job Type", "Job Min Salary", "Job Max Salary", "Status", "Posted At" };

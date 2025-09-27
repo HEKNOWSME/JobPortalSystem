@@ -8,14 +8,13 @@ import javax.swing.table.DefaultTableModel;
 public class UsersPanel extends JPanel {
     private int userID;
     private String role;
-    private final JLabel titleLabel = new JLabel("Title"); private final JTextField jobTitle = new JTextField(20);
-    private final JLabel descriptionLabel = new JLabel("Description"); private final JTextField jobDescription = new JTextField(20);
-    private final JLabel minSalaryLabel = new JLabel("Minimum Salary"); private final JTextField minSalary = new JTextField(20);
-    private final JLabel maxSalaryLabel = new JLabel("Maximum Salary"); private final JTextField maxSalary = new JTextField(20);
+    private final JLabel usernameLabel = new JLabel("Username "); private final JTextField username = new JTextField(20);
+    private final JLabel emailLabel = new JLabel("Email"); private final JTextField email = new JTextField(20);
+    private final JLabel passwordLabel = new JLabel("Password"); private final JTextField password = new JTextField(20);
     JTable table = new JTable();
     JScrollPane scrollPane = new JScrollPane(table);
     DefaultTableModel model = new DefaultTableModel();
-    JButton submitButton = new JButton("Create Job"); JButton updateButton = new JButton("Update Job"); JButton deleteButton = new JButton("Delete Job");
+    JButton submitButton = new JButton("Create User"); JButton updateButton = new JButton("Update User"); JButton deleteButton = new JButton("Delete Userf");
     public UsersPanel(int userID,  String role) {
         this.userID = userID;
         this.role = role;
@@ -23,7 +22,7 @@ public class UsersPanel extends JPanel {
         createUIComponents();
         createSizeComponents();
         createTable();
-        loadJobs();
+        loadUsers();
         submitButton.addActionListener(_-> createJob());
         deleteButton.addActionListener(_-> deleteJob());
         updateButton.addActionListener(_-> updateJob());
@@ -32,30 +31,32 @@ public class UsersPanel extends JPanel {
         setLayout(null);
     }
     private void createUIComponents() {
-        add(titleLabel);
-        add(jobTitle); add(jobTitle);
-        add(descriptionLabel); add(descriptionLabel);
-        add(jobDescription); add(jobDescription);
-        add(minSalaryLabel);add(minSalary);
-        add(maxSalaryLabel);add(maxSalary);
-        add(submitButton); add(submitButton);
-        add(updateButton); add(updateButton);
-        add(deleteButton); add(deleteButton);
+        add(usernameLabel); add(username);
+        add(emailLabel); add(email);
+        add(passwordLabel);add(password); add(submitButton);
+        add(deleteButton); add(updateButton);
 
 
     }
     private void  createSizeComponents() {
-        titleLabel.setBounds(10, 10, 100, 30); jobTitle.setBounds(130, 10, 200, 30);
-        descriptionLabel.setBounds(10, 50, 100, 30); jobDescription.setBounds(130, 50, 200, 30);
-        minSalaryLabel.setBounds(10, 90, 100, 30); minSalary.setBounds(130, 90, 200, 30);
-        maxSalaryLabel.setBounds(10, 130, 100, 30); maxSalary.setBounds(130, 130, 200, 30);
-        submitButton.setBounds(350, 10, 100, 30);
-        updateButton.setBounds(350, 50, 100, 30);
-        deleteButton.setBounds(350, 90, 100, 30);
+        setFields(usernameLabel, username, emailLabel, email, passwordLabel, password);
+        submitButton.setBounds(350, 10, 200, 30);
+        updateButton.setBounds(350, 50, 200, 30);
+        deleteButton.setBounds(350, 90, 200, 30);
     }
+
+    public static void setFields(JLabel usernameLabel, JTextField username, JLabel emailLabel, JTextField email, JLabel passwordLabel, JTextField password) {
+        usernameLabel.setBounds(10, 10, 100, 30);
+        username.setBounds(130, 10, 200, 30);
+        emailLabel.setBounds(10, 50, 100, 30);
+        email.setBounds(130, 50, 200, 30);
+        passwordLabel.setBounds(10, 90, 100, 30);
+        password.setBounds(130, 90, 200, 30);
+    }
+
     private void  createTable() {
-        String[] columns = {"ID", "Job Title", "Job Description", "Job Type", "Job Min Salary", "Job Max Salary", "Status", "Posted At" };
-        for (var col : columns) {
+        String[] usersColumns = {"UserId","Username", "Email", "password", "Role", "Created At"};
+        for (var col : usersColumns) {
             model.addColumn(col);
         }
         table.setModel(model);
@@ -66,37 +67,32 @@ public class UsersPanel extends JPanel {
         add(scrollPane);
     }
     private void createJob() {
-        if (jobTitle.getText().isEmpty()
-                || jobDescription.getText().isEmpty()
-                || minSalary.getText().isEmpty()
-                || maxSalary.getText().isEmpty()) {
+        if (username.getText().isEmpty()
+                || email.getText().isEmpty()
+                || password.getText().isEmpty()
+                || username.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill all the fields", "Error", JOptionPane.ERROR_MESSAGE);
-        } else if (Integer.parseInt(minSalary.getText()) > Integer.parseInt(maxSalary.getText())) {
-            JOptionPane.showMessageDialog(this, "Minimum Salary must not be greater than Maximum Salary", "Error", JOptionPane.ERROR_MESSAGE);
         } else {
-            String title = jobTitle.getText();
-            String description = jobDescription.getText();
-            int min = Integer.parseInt(minSalary.getText());
-            int max = Integer.parseInt(maxSalary.getText());
+            String username = this.username.getText();
+            String emailText = email.getText();
+            String password = this.password.getText();
             try(var conn = Db.getConnection()) {
-                var fetchEmployerCompany = conn.prepareStatement("SELECT * FROM companies WHERE user_id = ?");
-                fetchEmployerCompany.setInt(1, userID);
-                var employerCompany = fetchEmployerCompany.executeQuery();
+                var fetchAllUsersExceptAdmin = conn.prepareStatement("SELECT * FROM users WHERE NOT user_id = ?");
+                fetchAllUsersExceptAdmin.setInt(1, userID);
+                var employerCompany = fetchAllUsersExceptAdmin.executeQuery();
                 if (employerCompany.next()) {
-                    var createStatement = conn.prepareStatement("INSERT INTO jobs (title, description, salary_min, salary_max, company_id) VALUES (?,?,?,?,?)");
-                    createStatement.setString(1, title);
-                    createStatement.setString(2, description);
-                    createStatement.setInt(3, min);
-                    createStatement.setInt(4, max);
-                    createStatement.setInt(5, employerCompany.getInt("company_id"));
+                    var createStatement = conn.prepareStatement("INSERT INTO users (username, email, password) VALUES (?,?,?)");
+                    createStatement.setString(1, username);
+                    createStatement.setString(2, emailText);
+                    createStatement.setString(3, password);
                     var created = createStatement.executeUpdate();
                     if (created > 0) {
                         clearFields();
                         model.setRowCount(0);
-                        loadJobs();
-                        JOptionPane.showMessageDialog(this, "Job Created", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        loadUsers();
+                        JOptionPane.showMessageDialog(this, "User Created", "Success", JOptionPane.INFORMATION_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(this, "Job Not Created", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "User Not Created", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
                     JOptionPane.showMessageDialog(this, "Employer Not Found", "Error", JOptionPane.ERROR_MESSAGE);
@@ -109,25 +105,23 @@ public class UsersPanel extends JPanel {
         }
     }
     private void clearFields() {
-        jobTitle.setText("");
-        jobDescription.setText("");
-        minSalary.setText("");
-        maxSalary.setText("");
+        username.setText("");
+        email.setText("");
+        password.setText("");
     }
-    private void loadJobs() {
+    private void loadUsers() {
         try (var conn = Db.getConnection()) {
-            var statement = conn.prepareStatement("SELECT * FROM jobs");
+            var statement = conn.prepareStatement("SELECT * FROM users WHERE NOT user_id = ?");
+            statement.setInt(1, userID);
             var resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 model.addRow(new Object[]{
-                        resultSet.getInt("job_id"),
-                        resultSet.getString("title"),
-                        resultSet.getString("description"),
-                        resultSet.getString("Job_type"),
-                        resultSet.getInt("salary_min"),
-                        resultSet.getInt("salary_max"),
-                        resultSet.getString("status"),
-                        resultSet.getString("posted_at")
+                        resultSet.getInt("user_id"),
+                        resultSet.getString("username"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password"),
+                        resultSet.getString("role"),
+                        resultSet.getString("created_at"),
                 });
             }
 
@@ -163,26 +157,25 @@ public class UsersPanel extends JPanel {
         if (selectedRow < 0) {
             JOptionPane.showMessageDialog(this, "Selected Row Not Found", "Error", JOptionPane.ERROR_MESSAGE);
         } else  {
-            String jobID = model.getValueAt(selectedRow, 0).toString();
-            int id = Integer.parseInt(jobID);
+            String selectedId = model.getValueAt(selectedRow, 0).toString();
+            int id = Integer.parseInt(selectedId);
             try (var conn = Db.getConnection()) {
-                var fecthJob = conn.prepareStatement("SELECT * FROM jobs where job_id = ?");
-                fecthJob.setInt(1, id);
-                var result = fecthJob.executeQuery();
+                var fetchJob = conn.prepareStatement("SELECT * FROM users where user_id = ?");
+                fetchJob.setInt(1, id);
+                var result = fetchJob.executeQuery();
                 if (result.next()) {
-                    var statement =  conn.prepareStatement("UPDATE jobs SET title = ?, description = ?, salary_min =?, salary_max =? where job_id = ?");
-                    statement.setString(1, jobTitle.getText().isEmpty() ? result.getString("title") : jobTitle.getText());
-                    statement.setString(2, jobDescription.getText().isEmpty() ? result.getString("description") : jobDescription.getText());
-                    statement.setInt(3, Integer.parseInt(minSalary.getText().isEmpty() ? result.getString("salary_min") : minSalary.getText()));
-                    statement.setInt(4, Integer.parseInt(maxSalary.getText().isEmpty() ? result.getString("salary_max") : maxSalary.getText()));
-                    statement.setInt(5, id);
+                    var statement =  conn.prepareStatement("UPDATE users SET username = ?, email = ?, password =? WHERE user_id = ?");
+                    statement.setString(1, username.getText().isEmpty() ? result.getString("username") : username.getText());
+                    statement.setString(2, email.getText().isEmpty() ? result.getString("email") : email.getText());
+                    statement.setString(3, password.getText().isEmpty() ? result.getString("password") : password.getText());
+                    statement.setInt(4, id);
                     statement.executeUpdate();
                     model.setRowCount(0);
                     clearFields();
-                    loadJobs();
-                    JOptionPane.showMessageDialog(this, "Job Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    loadUsers();
+                    JOptionPane.showMessageDialog(this, "User Updated", "Success", JOptionPane.INFORMATION_MESSAGE);
                 } else  {
-                    JOptionPane.showMessageDialog(this, "Job Not Updated", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "User Not Found", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
