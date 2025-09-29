@@ -13,7 +13,6 @@ public class JobPortalSystemUI extends JFrame {
     private final int userID;
     private final String role;
     private JTabbedPane tabbedPane;
-    private JButton logoutButton;
 
     public JobPortalSystemUI(int userID, String role) {
         this.userID = userID;
@@ -38,7 +37,7 @@ public class JobPortalSystemUI extends JFrame {
 
     private void addHeader() {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        logoutButton = new JButton("Logout");
+        JButton logoutButton = new JButton("Logout");
 
         logoutButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
@@ -66,7 +65,7 @@ public class JobPortalSystemUI extends JFrame {
                 tabbedPane.addTab("Companies", new CompaniesPanel(userID, role));
             }
             case "admin" -> {
-                tabbedPane.addTab("Users", new UsersPanel(userID, role));
+                tabbedPane.addTab("Users", new UsersPanel(userID));
                 tabbedPane.addTab("Companies", new CompaniesPanel(userID, role));
             }
             default -> {

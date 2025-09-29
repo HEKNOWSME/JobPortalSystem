@@ -24,7 +24,7 @@ public class JobsPanel extends JPanel {
     JButton submitButton = new JButton("Create Job");
     JButton updateButton = new JButton("Update Job");
     JButton deleteButton = new JButton("Delete Job");
-    JButton applyButton = new JButton("Apply Job"); // added for jobseekers
+    JButton applyButton = new JButton("Apply Job");
 
     public JobsPanel(int userID, String role) {
         this.userID = userID;
@@ -226,7 +226,7 @@ public class JobsPanel extends JPanel {
         int jobId = Integer.parseInt(model.getValueAt(selectedRow, 0).toString());
 
         try (var conn = Db.getConnection()) {
-            // check if already applied
+
             var checkStmt = conn.prepareStatement("SELECT * FROM applications WHERE job_id = ? AND user_id = ?");
             checkStmt.setInt(1, jobId);
             checkStmt.setInt(2, userID);

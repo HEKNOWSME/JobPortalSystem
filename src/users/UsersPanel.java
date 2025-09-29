@@ -7,7 +7,6 @@ import javax.swing.table.DefaultTableModel;
 
 public class UsersPanel extends JPanel {
     private int userID;
-    private String role;
     private final JLabel usernameLabel = new JLabel("Username "); private final JTextField username = new JTextField(20);
     private final JLabel emailLabel = new JLabel("Email"); private final JTextField email = new JTextField(20);
     private final JLabel passwordLabel = new JLabel("Password"); private final JTextField password = new JTextField(20);
@@ -15,9 +14,8 @@ public class UsersPanel extends JPanel {
     JScrollPane scrollPane = new JScrollPane(table);
     DefaultTableModel model = new DefaultTableModel();
     JButton submitButton = new JButton("Create User"); JButton updateButton = new JButton("Update User"); JButton deleteButton = new JButton("Delete Userf");
-    public UsersPanel(int userID,  String role) {
+    public UsersPanel(int userID) {
         this.userID = userID;
-        this.role = role;
         init();
         createUIComponents();
         createSizeComponents();

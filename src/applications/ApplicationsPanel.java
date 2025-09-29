@@ -25,7 +25,6 @@ public class ApplicationsPanel extends JPanel {
         createTable();
         add(scrollPane, BorderLayout.CENTER);
 
-        // Only show employer buttons
         if ("employer".equals(this.role)) {
             JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             btnPanel.add(hireButton);
