@@ -25,7 +25,7 @@ public class UsersPanel extends JPanel {
             model.addColumn(col);
         }
         table.setModel(model);
-        scrollPane.setBounds(10, 200, 1250, 400);
+        scrollPane.setBounds(10, 10, 1250, 400);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getColumnModel().getColumn(0).setPreferredWidth(5);
         table.setRowHeight(50);

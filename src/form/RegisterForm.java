@@ -22,7 +22,7 @@ public class RegisterForm extends JFrame {
         setLayout(null);
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(400, 230);
         setLocationRelativeTo(null);
         setTitle("Register Form");
         getContentPane().setBackground(new Color(236, 221, 221));
@@ -34,8 +34,8 @@ public class RegisterForm extends JFrame {
     }
     private void setComponentsSize() {
         usernameLabel.setBounds(10, 30, 100, 30); username.setBounds(120, 30, 260, 30);
-        passwordLabel.setBounds(10, 170, 100, 30); password.setBounds(120, 170, 260, 30);
-        registerButton.setBounds(10, 220, 180, 30); loginBtn.setBounds(195, 220, 180, 30);
+        passwordLabel.setBounds(10, 90, 100, 30); password.setBounds(120, 90, 260, 30);
+        registerButton.setBounds(10, 150, 180, 30); loginBtn.setBounds(195, 150, 180, 30);
     }
     private void loginRedirect() {
         dispose();
