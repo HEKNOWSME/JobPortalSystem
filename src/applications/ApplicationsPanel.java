@@ -9,6 +9,7 @@ import java.awt.*;
 public class ApplicationsPanel extends JPanel {
     private final int userID;
     private final String role;
+    private int companyID;
 
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
@@ -19,7 +20,7 @@ public class ApplicationsPanel extends JPanel {
 
     public ApplicationsPanel(int userID, String role) {
         this.userID = userID;
-        this.role = role.toLowerCase(); // normalize
+        this.role = role.toLowerCase();
 
         setLayout(new BorderLayout(10, 10));
         createTable();
@@ -53,15 +54,37 @@ public class ApplicationsPanel extends JPanel {
                 query = "SELECT a.application_id, j.title, u.username AS applicant, a.status, a.applied_at " +
                         "FROM applications a " +
                         "JOIN jobs j ON a.job_id = j.job_id " +
-                        "JOIN users u ON a.user_id = u.user_id " +
-                        "WHERE a.user_id = ?";
+                        "JOIN users u ON a.jobseeker_id = u.user_id " +
+                        "WHERE a.jobseeker_id = ?";
             } else if ("employer".equals(role)) {
-                query = "SELECT a.application_id, j.title, u.username AS applicant, a.status, a.applied_at " +
-                        "FROM applications a " +
-                        "JOIN jobs j ON a.job_id = j.job_id " +
-                        "JOIN users u ON a.user_id = u.user_id " +
-                        "JOIN companies c ON j.company_id = c.company_id " +
-                        "WHERE c.user_id = ?";
+                String company = """
+                        SELECT c.name, c.company_id, m.email, a.city
+                        FROM companies c
+                            JOIN managers m
+                            JOIN address a
+                        ON
+                           a.address_id = c.location
+                        WHERE m.manager_id = ?
+                        """;
+                var stmt1 = conn.prepareStatement(company);
+                stmt1.setInt(1, userID);
+                var rs = stmt1.executeQuery();
+                if (rs.next()) {
+                    companyID = rs.getInt("company_id");
+                    query = """
+                          SELECT a.application_id, j.title, u.username, js.email  AS applicant, a.status, a.applied_at
+                          FROM applications a
+                              JOIN jobs j ON a.job_id = j.job_id
+                              JOIN users u ON a.jobseeker_id = u.user_id
+                              JOIN jobseekers js
+                              JOIN companies c ON j.company_id = c.company_id
+                              JOIN managers m on C.company_id = m.company_id
+                          WHERE m.manager_id = ?
+                            """;
+                } else {
+                    return;
+                }
+
             } else {
                 return;
             }

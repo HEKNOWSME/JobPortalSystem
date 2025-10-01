@@ -77,7 +77,7 @@ public class JobsPanel extends JPanel {
 
     private void createTable() {
         String[] columns = {
-                "ID", "Job Title", "Job Description", "Job Type",
+                "ID", "Job Title", "Job Description", "Job Type", "company", "city",
                 "Job Min Salary", "Job Max Salary", "Status", "Posted At"
         };
         for (var col : columns) {
@@ -103,7 +103,7 @@ public class JobsPanel extends JPanel {
             int min = Integer.parseInt(minSalary.getText());
             int max = Integer.parseInt(maxSalary.getText());
             try (var conn = Db.getConnection()) {
-                var fetchEmployerCompany = conn.prepareStatement("SELECT * FROM companies WHERE user_id = ?");
+                var fetchEmployerCompany = conn.prepareStatement("SELECT * from companies join managers ON  manager_id = ?");
                 fetchEmployerCompany.setInt(1, userID);
                 var employerCompany = fetchEmployerCompany.executeQuery();
                 if (employerCompany.next()) {
@@ -142,7 +142,14 @@ public class JobsPanel extends JPanel {
 
     private void loadJobs() {
         try (var conn = Db.getConnection()) {
-            var statement = conn.prepareStatement("SELECT * FROM jobs");
+            var statement = conn.prepareStatement("""
+                    SELECT j.job_id, j.title AS title, j.description,
+                           j.job_type, c.name AS company, a.city, j.salary_min, j.salary_max,
+                           j.posted_at, j.status
+                    FROM jobs j
+                            JOIN companies c
+                            JOIN address a ON c.location = a.address_id
+                    """);
             var resultSet = statement.executeQuery();
             model.setRowCount(0); // clear old rows
             while (resultSet.next()) {
@@ -151,6 +158,8 @@ public class JobsPanel extends JPanel {
                         resultSet.getString("title"),
                         resultSet.getString("description"),
                         resultSet.getString("job_type"),
+                        resultSet.getString("company"),
+                        resultSet.getString("city"),
                         resultSet.getInt("salary_min"),
                         resultSet.getInt("salary_max"),
                         resultSet.getString("status"),
@@ -227,7 +236,7 @@ public class JobsPanel extends JPanel {
 
         try (var conn = Db.getConnection()) {
 
-            var checkStmt = conn.prepareStatement("SELECT * FROM applications WHERE job_id = ? AND user_id = ?");
+            var checkStmt = conn.prepareStatement("SELECT * FROM applications WHERE job_id = ? AND jobseeker_id = ?");
             checkStmt.setInt(1, jobId);
             checkStmt.setInt(2, userID);
             var rs = checkStmt.executeQuery();
@@ -236,7 +245,7 @@ public class JobsPanel extends JPanel {
                 return;
             }
 
-            var stmt = conn.prepareStatement("INSERT INTO applications (job_id, user_id) VALUES (?, ?)");
+            var stmt = conn.prepareStatement("INSERT INTO applications (job_id, jobseeker_id) VALUES (?, ?)");
             stmt.setInt(1, jobId);
             stmt.setInt(2, userID);
             int inserted = stmt.executeUpdate();

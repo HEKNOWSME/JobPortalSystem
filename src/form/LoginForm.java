@@ -8,8 +8,8 @@ import java.sql.Connection;
 
 
 public class LoginForm extends JFrame {
-    private final JLabel emailLabel = new JLabel("Email "); private final JTextField email = new JTextField(20);
-    private final JLabel passwordLabel = new JLabel("Password "); private final JPasswordField password = new JPasswordField(20);
+    private final JLabel usernameLabel = new JLabel("Username "); private final JTextField usernameField = new JTextField(20);
+    private final JLabel passwordLabel = new JLabel("Password "); private final JPasswordField passwordField = new JPasswordField(20);
     private final JButton loginBtn = new JButton("Login");  private final JButton registerButton = new JButton("Sign Up");
     public LoginForm() {
         createUI();
@@ -30,12 +30,12 @@ public class LoginForm extends JFrame {
         setVisible(true);
     }
     private void  createUIComponents() {
-        add(emailLabel); add(email); add(passwordLabel); add(password);
+        add(usernameLabel); add(usernameField); add(passwordLabel); add(passwordField);
         add(loginBtn); add(registerButton);
     }
     private void setComponentsSize() {
-        emailLabel.setBounds(10, 30, 100, 30); email.setBounds(120, 30, 260, 30);
-        passwordLabel.setBounds(10, 100, 100, 30); password.setBounds(120, 100, 260, 30);
+        usernameLabel.setBounds(10, 30, 100, 30); usernameField.setBounds(120, 30, 260, 30);
+        passwordLabel.setBounds(10, 100, 100, 30); passwordField.setBounds(120, 100, 260, 30);
         loginBtn.setBounds(10, 170, 170, 30); registerButton.setBounds(190, 170, 180, 30);
     }
     private void registerUser() {
@@ -43,17 +43,17 @@ public class LoginForm extends JFrame {
         new RegisterForm();
     }
     private void loginUserIntoSystem() {
-        if (email.getText().isEmpty()) {
+        if (usernameField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter email", "Email", JOptionPane.ERROR_MESSAGE);
-        } else if (new String(password.getPassword()).isEmpty()) {
+        } else if (new String(passwordField.getPassword()).isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter password", "Password", JOptionPane.ERROR_MESSAGE);
         } else {
             try (Connection conn =  Db.getConnection()) {
-                var statement = conn.prepareStatement("SELECT * FROM users WHERE email = ?");
-                statement.setString(1, email.getText());
+                var statement = conn.prepareStatement("SELECT * FROM users WHERE username = ?");
+                statement.setString(1, usernameField.getText());
                 var user = statement.executeQuery();
                 if (user.next()) {
-                    var checkPassword = user.getString("password").equals(new String(password.getPassword()));
+                    var checkPassword = user.getString("password").equals(new String(passwordField.getPassword()));
                     if (checkPassword) {
                         JOptionPane.showMessageDialog(this, "Login Successful", "Login", JOptionPane.INFORMATION_MESSAGE);
                         dispose();

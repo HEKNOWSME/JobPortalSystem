@@ -1,5 +1,6 @@
 package companies;
 
+import address.Address;
 import database.Db;
 
 import javax.swing.*;
@@ -10,22 +11,13 @@ public class CompaniesPanel extends JPanel {
     private final int userID;
     private final String role;
 
-    private final JLabel nameLabel = new JLabel("Company Name");
     private final JTextField name = new JTextField(20);
 
-    private final JLabel locationLabel = new JLabel("Location");
-    private final JTextField location = new JTextField(20);
+    private final JComboBox<Address> locationCombo = new JComboBox<>();
 
-    private final JLabel employerIdLabel = new JLabel("Employer ID");
-    private final JTextField employer_id = new JTextField(20);
-
-    private JTable table = new JTable();
-    private JScrollPane scrollPane = new JScrollPane(table);
-    private DefaultTableModel model = new DefaultTableModel();
-
-    private JButton submitButton = new JButton("Create Company");
-    private JButton updateButton = new JButton("Update Company");
-    private JButton deleteButton = new JButton("Delete Company");
+    private final JTable table = new JTable();
+    private final JScrollPane scrollPane = new JScrollPane(table);
+    private final DefaultTableModel model = new DefaultTableModel();
 
     public CompaniesPanel(int userID, String role) {
         this.userID = userID;
@@ -37,24 +29,22 @@ public class CompaniesPanel extends JPanel {
         gbc.insets = new Insets(5,5,5,5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-
+        JButton submitButton = new JButton("Create Company");
+        JButton deleteButton = new JButton("Delete Company");
+        JButton updateButton = new JButton("Update Company");
         if (role.equalsIgnoreCase("Admin")) {
             gbc.gridx = 0; gbc.gridy = 0;
+            JLabel nameLabel = new JLabel("Company Name");
             formPanel.add(nameLabel, gbc);
             gbc.gridx = 1;
             formPanel.add(name, gbc);
 
             gbc.gridx = 0; gbc.gridy = 1;
+            JLabel locationLabel = new JLabel("Location");
             formPanel.add(locationLabel, gbc);
             gbc.gridx = 1;
-            formPanel.add(location, gbc);
-
+            formPanel.add(locationCombo, gbc);
             gbc.gridx = 0; gbc.gridy = 2;
-            formPanel.add(employerIdLabel, gbc);
-            gbc.gridx = 1;
-            formPanel.add(employer_id, gbc);
-
-            gbc.gridx = 0; gbc.gridy = 3;
             formPanel.add(submitButton, gbc);
             gbc.gridx = 1;
             formPanel.add(updateButton, gbc);
@@ -64,10 +54,11 @@ public class CompaniesPanel extends JPanel {
 
         add(formPanel, BorderLayout.NORTH);
 
-
         createTable();
         add(scrollPane, BorderLayout.CENTER);
 
+
+        loadLocations();
         if (role.equalsIgnoreCase("Admin") || role.equalsIgnoreCase("Employer")) {
             loadCompanies();
         }
@@ -86,35 +77,48 @@ public class CompaniesPanel extends JPanel {
         scrollPane.setPreferredSize(new Dimension(1200, 400));
     }
 
+
+    private void loadLocations() {
+        try (var conn = Db.getConnection()) {
+            var stmt = conn.prepareStatement("SELECT address_id AS id, city, country, created_at FROM address ORDER BY city");
+            var rs = stmt.executeQuery();
+
+            locationCombo.removeAllItems();
+            while (rs.next()) {
+                locationCombo.addItem(new Address(
+                        rs.getInt("id"),
+                        rs.getString("city"),
+                        rs.getString("country"),
+                        rs.getString("created_at")
+                ));
+            }
+            locationCombo.setSelectedIndex(-1);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void createCompany() {
-        if (name.getText().isEmpty() || location.getText().isEmpty() || employer_id.getText().isEmpty()) {
+        if (name.getText().isEmpty() || locationCombo.getSelectedItem() == null) {
             JOptionPane.showMessageDialog(this, "Please fill all the fields", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        Address location = (Address) locationCombo.getSelectedItem();
+
         try (var conn = Db.getConnection()) {
-            int employer = Integer.parseInt(employer_id.getText());
-            var checkEmployer = conn.prepareStatement("SELECT * FROM users WHERE user_id = ? AND role = 'employer'");
-            checkEmployer.setInt(1, employer);
-            var rs = checkEmployer.executeQuery();
+            var stmt = conn.prepareStatement("INSERT INTO companies (name, location) VALUES (?,?)");
+            stmt.setString(1, name.getText());
+            stmt.setInt(2, location.getId());
+            int created = stmt.executeUpdate();
 
-            if (rs.next()) {
-                var stmt = conn.prepareStatement("INSERT INTO companies (name, location, user_id) VALUES (?,?,?)");
-                stmt.setString(1, name.getText());
-                stmt.setString(2, location.getText());
-                stmt.setInt(3, employer);
-                int created = stmt.executeUpdate();
-
-                if (created > 0) {
-                    clearFields();
-                    model.setRowCount(0);
-                    loadCompanies();
-                    JOptionPane.showMessageDialog(this, "Company Created", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Company not created", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+            if (created > 0) {
+                clearFields();
+                model.setRowCount(0);
+                loadCompanies();
+                JOptionPane.showMessageDialog(this, "Company Created", "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Employer not found", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Company not created", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -131,23 +135,17 @@ public class CompaniesPanel extends JPanel {
         int companyId = (int) table.getValueAt(selectedRow, 0);
 
         try (var conn = Db.getConnection()) {
-            int employer = employer_id.getText().isEmpty() ? -1 : Integer.parseInt(employer_id.getText());
+            var stmt = conn.prepareStatement("UPDATE companies SET name = ?, location = ? WHERE company_id = ?");
+            stmt.setString(1, name.getText().isEmpty() ? (String) table.getValueAt(selectedRow, 1) : name.getText());
 
-            if (employer != -1) {
-                var checkEmployer = conn.prepareStatement("SELECT * FROM users WHERE user_id = ? AND role = 'employer'");
-                checkEmployer.setInt(1, employer);
-                var rs = checkEmployer.executeQuery();
-                if (!rs.next()) {
-                    JOptionPane.showMessageDialog(this, "Employer not found", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+            Address location = (Address) locationCombo.getSelectedItem();
+            if (location != null) {
+                stmt.setInt(2, location.getId());
+            } else {
+                stmt.setInt(2, (Integer) table.getValueAt(selectedRow, 2));
             }
 
-            var stmt = conn.prepareStatement("UPDATE companies SET name = ?, location = ?, user_id = ? WHERE company_id = ?");
-            stmt.setString(1, name.getText().isEmpty() ? (String) table.getValueAt(selectedRow, 1) : name.getText());
-            stmt.setString(2, location.getText().isEmpty() ? (String) table.getValueAt(selectedRow, 2) : location.getText());
-            stmt.setInt(3, employer != -1 ? employer : (int) table.getValueAt(selectedRow, 0));
-            stmt.setInt(4, companyId);
+            stmt.setInt(3, companyId);
             stmt.executeUpdate();
 
             clearFields();
@@ -187,19 +185,33 @@ public class CompaniesPanel extends JPanel {
 
     private void clearFields() {
         name.setText("");
-        location.setText("");
-        employer_id.setText("");
+        locationCombo.setSelectedIndex(-1);
     }
 
     public void loadCompanies() {
         try (var conn = Db.getConnection()) {
             String sql;
             if (role.equalsIgnoreCase("Admin")) {
-                sql = "SELECT c.company_id, c.name, c.location, u.username AS employer_name, u.email AS employer_email, c.created_at " +
-                        "FROM companies c JOIN users u ON c.user_id = u.user_id";
-            } else if (role.equalsIgnoreCase("Employer")) {
-                sql = "SELECT c.company_id, c.name, c.location, u.username AS employer_name, u.email AS employer_email, c.created_at " +
-                        "FROM companies c JOIN users u ON c.user_id = u.user_id WHERE c.user_id = ?";
+                sql = """
+                        SELECT c.company_id, c.name, a.city AS location, m.name AS employer_name, m.email AS employer_email, c.created_at
+                        FROM companies c
+                                 JOIN users u
+                                 JOIN managers m
+                                    ON u.user_id = m.manager_id AND m.company_id = c.company_id
+                                 JOIN address a
+                        ON a.address_id = c.location""";
+            }
+            else if (role.equalsIgnoreCase("Employer")) {
+                sql = """
+                        SELECT c.company_id, c.name, a.city AS location, u.username AS employer_name, m.email AS employer_email, c.created_at
+                        FROM companies c
+                            JOIN users u
+                                JOIN managers m
+                                ON m.manager_id = u.user_id
+                            JOIN address a
+                                ON a.address_id = c.location
+                            WHERE manager_id = ?;
+                        """;
             } else {
                 return;
             }
@@ -213,7 +225,7 @@ public class CompaniesPanel extends JPanel {
                 model.addRow(new Object[]{
                         rs.getInt("company_id"),
                         rs.getString("name"),
-                        rs.getString("location"),
+                        rs.getString("location"), // city name
                         rs.getString("employer_name"),
                         rs.getString("employer_email"),
                         rs.getTimestamp("created_at")

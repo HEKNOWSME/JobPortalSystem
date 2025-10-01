@@ -1,9 +1,12 @@
 package database;
 
+import address.AddressesPanel;
 import applications.ApplicationsPanel;
 import companies.CompaniesPanel;
 import form.LoginForm;
 import jobs.JobsPanel;
+import jobseekers.JobSeekersPanel;
+import managers.ManagerPanel;
 import users.UsersPanel;
 
 import javax.swing.*;
@@ -67,6 +70,9 @@ public class JobPortalSystemUI extends JFrame {
             case "admin" -> {
                 tabbedPane.addTab("Users", new UsersPanel(userID));
                 tabbedPane.addTab("Companies", new CompaniesPanel(userID, role));
+                tabbedPane.addTab("Managers", new ManagerPanel());
+                tabbedPane.addTab("Job Seekers", new JobSeekersPanel());
+                tabbedPane.addTab("Locations", new AddressesPanel());
             }
             default -> {
                 JOptionPane.showMessageDialog(null, "Login Failed", "Error", JOptionPane.ERROR_MESSAGE);
