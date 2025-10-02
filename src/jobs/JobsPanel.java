@@ -147,8 +147,9 @@ public class JobsPanel extends JPanel {
                            j.job_type, c.name AS company, a.city, j.salary_min, j.salary_max,
                            j.posted_at, j.status
                     FROM jobs j
-                            JOIN companies c
-                            JOIN address a ON c.location = a.address_id
+                        JOIN companies c
+                            ON j.company_id = c.company_id
+                        JOIN address a ON c.location = a.address_id
                     """);
             var resultSet = statement.executeQuery();
             model.setRowCount(0); // clear old rows

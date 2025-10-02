@@ -72,14 +72,16 @@ public class ApplicationsPanel extends JPanel {
                 if (rs.next()) {
                     companyID = rs.getInt("company_id");
                     query = """
-                          SELECT a.application_id, j.title, u.username, js.email  AS applicant, a.status, a.applied_at
+                          
+                            SELECT a.application_id, j.title, u.username, js.email  AS applicant, a.status, a.applied_at
                           FROM applications a
-                              JOIN jobs j ON a.job_id = j.job_id
-                              JOIN users u ON a.jobseeker_id = u.user_id
-                              JOIN jobseekers js
-                              JOIN companies c ON j.company_id = c.company_id
-                              JOIN managers m on C.company_id = m.company_id
-                          WHERE m.manager_id = ?
+                                   JOIN jobs j ON a.job_id = j.job_id
+                                   JOIN users u ON a.jobseeker_id = u.user_id
+                                   JOIN jobseekers js
+                                  ON a.jobseeker_id = js.jobseeker_id
+                                   JOIN companies c ON j.company_id = c.company_id
+                                   JOIN managers m on C.company_id = m.company_id
+                          WHERE m.manager_id = ?;
                             """;
                 } else {
                     return;

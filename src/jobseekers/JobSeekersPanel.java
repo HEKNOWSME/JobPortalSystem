@@ -21,6 +21,7 @@ public class JobSeekersPanel extends JPanel {
     JTextField passwordField = new JTextField(20);
     JButton submitButton = new JButton("Submit Seeker");
     JButton updateButton = new JButton("Update Seeker");
+    JButton deleteButton = new JButton("Delete Seeker");
     DefaultTableModel model = new DefaultTableModel();
     JTable table = new JTable(model);
     JScrollPane tablePane = new JScrollPane(table);
@@ -32,7 +33,10 @@ public class JobSeekersPanel extends JPanel {
         fetchAddresses();
         submitButton.addActionListener(_-> createJobSeeker());
         updateButton.addActionListener(_-> updateJobSeeker());
+        deleteButton.addActionListener(_-> deleteJobSeeker());
     }
+
+
     private void initComponents() {
         setLayout(new BorderLayout());
     }
@@ -62,6 +66,7 @@ public class JobSeekersPanel extends JPanel {
         panel.add(addressCombo);
         panel.add(submitButton);
         panel.add(updateButton);
+        panel.add(deleteButton);
         add(panel, BorderLayout.NORTH);
     }
     private void fetchAddresses() {
@@ -207,6 +212,25 @@ public class JobSeekersPanel extends JPanel {
         }
         catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void deleteJobSeeker() {
+        var selectedRow = table.getSelectedRow();
+        var seekerId = model.getValueAt(selectedRow, 0);
+        var id = Integer.parseInt(seekerId.toString());
+        try (var conn = Db.getConnection()) {
+            var stmt = conn.prepareStatement("DELETE FROM jobseekers WHERE jobseeker_id = ?");
+            stmt.setInt(1, id);
+            int deleted = stmt.executeUpdate();
+            if (deleted > 0) {
+                model.removeRow(selectedRow);
+                model.setRowCount(0);
+                loadJobSeekers();
+                clearForm();
+                JOptionPane.showMessageDialog(this, "Jobseeker Deleted", "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
