@@ -42,7 +42,7 @@ public class JobPortalSystemUI extends JFrame {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton logoutButton = new JButton("Logout");
 
-        logoutButton.addActionListener(e -> {
+        logoutButton.addActionListener(_ -> {
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Are you sure you want to logout?",
                     "Confirm Logout", JOptionPane.YES_NO_OPTION);
@@ -68,14 +68,11 @@ public class JobPortalSystemUI extends JFrame {
                 tabbedPane.addTab("Companies", new CompaniesPanel(userID, role));
             }
             case "admin" -> {
-                tabbedPane.addTab("Users", new UsersPanel(userID));
+                tabbedPane.addTab("Users", new UsersPanel());
                 tabbedPane.addTab("Companies", new CompaniesPanel(userID, role));
                 tabbedPane.addTab("Managers", new ManagerPanel());
                 tabbedPane.addTab("Job Seekers", new JobSeekersPanel());
                 tabbedPane.addTab("Locations", new AddressesPanel());
-            }
-            default -> {
-                JOptionPane.showMessageDialog(null, "Login Failed", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

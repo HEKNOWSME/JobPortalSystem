@@ -6,8 +6,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class JobsPanel extends JPanel {
-    private int userID;
-    private String role;
+    private final int userID;
     private final JLabel titleLabel = new JLabel("Title");
     private final JTextField jobTitle = new JTextField(20);
     private final JLabel descriptionLabel = new JLabel("Description");
@@ -28,9 +27,8 @@ public class JobsPanel extends JPanel {
 
     public JobsPanel(int userID, String role) {
         this.userID = userID;
-        this.role = role;
         init();
-        if (this.role.equals("employer")) {
+        if (role.equals("employer")) {
             createUIComponents();
         }
         createSizeComponents();
@@ -41,7 +39,7 @@ public class JobsPanel extends JPanel {
         deleteButton.addActionListener(_ -> deleteJob());
         updateButton.addActionListener(_ -> updateJob());
 
-        if (this.role.equals("jobseeker")) {
+        if (role.equals("jobseeker")) {
             add(applyButton);
             applyButton.setBounds(1100, 150, 120, 30);
             applyButton.addActionListener(_ -> applyJob());

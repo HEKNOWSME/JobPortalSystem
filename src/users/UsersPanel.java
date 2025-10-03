@@ -6,12 +6,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class UsersPanel extends JPanel {
-    private int userID;
     JTable table = new JTable();
     JScrollPane scrollPane = new JScrollPane(table);
     DefaultTableModel model = new DefaultTableModel();
-    public UsersPanel(int userID) {
-        this.userID = userID;
+    public UsersPanel() {
         init();
         createTable();
         loadUsers();

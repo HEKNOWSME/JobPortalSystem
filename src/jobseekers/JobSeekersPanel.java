@@ -36,7 +36,6 @@ public class JobSeekersPanel extends JPanel {
         deleteButton.addActionListener(_-> deleteJobSeeker());
     }
 
-
     private void initComponents() {
         setLayout(new BorderLayout());
     }

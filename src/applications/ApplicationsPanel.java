@@ -9,14 +9,9 @@ import java.awt.*;
 public class ApplicationsPanel extends JPanel {
     private final int userID;
     private final String role;
-    private int companyID;
 
     private final JTable table = new JTable();
-    private final JScrollPane scrollPane = new JScrollPane(table);
     private final DefaultTableModel model = new DefaultTableModel();
-
-    private final JButton hireButton = new JButton("Hire Applicant");
-    private final JButton deleteButton = new JButton("Delete Application");
 
     public ApplicationsPanel(int userID, String role) {
         this.userID = userID;
@@ -24,16 +19,19 @@ public class ApplicationsPanel extends JPanel {
 
         setLayout(new BorderLayout(10, 10));
         createTable();
+        JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane, BorderLayout.CENTER);
 
         if ("employer".equals(this.role)) {
             JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            JButton hireButton = new JButton("Hire Applicant");
             btnPanel.add(hireButton);
+            JButton deleteButton = new JButton("Delete Application");
             btnPanel.add(deleteButton);
             add(btnPanel, BorderLayout.NORTH);
 
-            hireButton.addActionListener(e -> hireApplicant());
-            deleteButton.addActionListener(e -> deleteApplication());
+            hireButton.addActionListener(_ -> hireApplicant());
+            deleteButton.addActionListener(_ -> deleteApplication());
         }
 
         loadApplications();
@@ -70,9 +68,9 @@ public class ApplicationsPanel extends JPanel {
                 stmt1.setInt(1, userID);
                 var rs = stmt1.executeQuery();
                 if (rs.next()) {
-                    companyID = rs.getInt("company_id");
+                    rs.getInt("company_id");
                     query = """
-                          
+                         \s
                             SELECT a.application_id, j.title, u.username, js.email  AS applicant, a.status, a.applied_at
                           FROM applications a
                                    JOIN jobs j ON a.job_id = j.job_id
@@ -82,7 +80,7 @@ public class ApplicationsPanel extends JPanel {
                                    JOIN companies c ON j.company_id = c.company_id
                                    JOIN managers m on C.company_id = m.company_id
                           WHERE m.manager_id = ?;
-                            """;
+                           \s""";
                 } else {
                     return;
                 }
